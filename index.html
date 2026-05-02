@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ドローンパイロット管理ツール</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+      background: #f5f5f5;
+      padding: 20px;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #222; }
+
+    /* タブ */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #ddd;
+      color: #666;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: #06C755;
+      color: white;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #222;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus, textarea:focus { border-color: #06C755; }
+    textarea { height: 80px; resize: vertical; }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: #06C755;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #05a847; }
+    .btn-dark {
+      background: #222;
+      font-size: 14px;
+      padding: 10px;
+      margin-top: 8px;
+    }
+    .btn-dark:hover { background: #444; }
+    .btn-both {
+      background: #5856D6;
+      margin-bottom: 8px;
+    }
+    .btn-both:hover { background: #4745b8; }
+    .copied { background: #06C755 !important; }
+
+    .output-block {
+      display: none;
+      margin-top: 16px;
+    }
+    .output-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+    .output-text {
+      white-space: pre-wrap;
+      font-size: 14px;
+      line-height: 1.8;
+      color: #222;
+      background: #f9f9f9;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 8px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .btn-row .btn { font-size: 14px; padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚁 ドローンパイロット管理ツール</h1>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('both')">📋 両方生成</button>
+      <button class="tab" onclick="switchTab('instagram')">📸 Instagram投稿文</button>
+      <button class="tab" onclick="switchTab('line')">💬 LINE返信文</button>
+    </div>
+
+    <!-- 入力フォーム（共通） -->
+    <div class="card">
+      <h2>パイロット情報</h2>
+
+      <label>お名前（任意）</label>
+      <input type="text" id="name" placeholder="例：田中さん">
+
+      <label>Instagramアカウント名（@なしでOK）</label>
+      <input type="text" id="account" placeholder="例：t.t_okinawa">
+
+      <label>① 活動エリア</label>
+      <input type="text" id="area" placeholder="例：関東、沖縄、東北全域">
+
+      <label>② 所持機体</label>
+      <textarea id="equipment" placeholder="例：DJI Air3S・Mavic 3 Classic・5インチFPVドローン"></textarea>
+
+      <label>③ 資格</label>
+      <textarea id="license" placeholder="例：二等無人航空機操縦士・第三級陸上特殊無線技士"></textarea>
+
+      <label>④ 実務経験・得意分野</label>
+      <textarea id="experience" placeholder="例：企業案件、ウェディング、学校紹介ビデオ、コンテスト受賞多数"></textarea>
+
+      <!-- タブに応じてボタンを切り替え -->
+      <div id="btn-both">
+        <button class="btn btn-both" onclick="generateBoth()">📋 投稿文＋LINE返信文を両方生成</button>
+      </div>
+      <div id="btn-instagram" style="display:none;">
+        <button class="btn" onclick="generateInstagram()">📸 Instagram投稿文を生成</button>
+      </div>
+      <div id="btn-line" style="display:none;">
+        <button class="btn" style="background:#06C755;" onclick="generateLine()">💬 LINE返信文を生成</button>
+      </div>
+    </div>
+
+    <!-- 出力エリア -->
+    <div class="output-block" id="output-instagram">
+      <div class="card">
+        <h2>📸 Instagram投稿文</h2>
+        <div class="output-text" id="result-instagram"></div>
+        <button class="btn btn-dark" onclick="copyText('result-instagram', this)">コピーする</button>
+      </div>
+    </div>
+
+    <div class="output-block" id="output-line">
+      <div class="card">
+        <h2>💬 LINE返信文</h2>
+        <div class="output-text" id="result-line"></div>
+        <button class="btn btn-dark" onclick="copyText('result-line', this)">コピーする</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', ['both','instagram','line'][i] === tab);
+      });
+      document.getElementById('btn-both').style.display = tab === 'both' ? 'block' : 'none';
+      document.getElementById('btn-instagram').style.display = tab === 'instagram' ? 'block' : 'none';
+      document.getElementById('btn-line').style.display = tab === 'line' ? 'block' : 'none';
+    }
+
+    function getInputs() {
+      return {
+        name: document.getElementById('name').value.trim(),
+        account: document.getElementById('account').value.trim().replace('@', ''),
+        area: document.getElementById('area').value.trim(),
+        equipment: document.getElementById('equipment').value.trim(),
+        license: document.getElementById('license').value.trim(),
+        experience: document.getElementById('experience').value.trim(),
+      };
+    }
+
+    function validateInputs(inputs) {
+      if (!inputs.area || !inputs.equipment || !inputs.license || !inputs.experience) {
+        alert('活動エリア・所持機体・資格・実務経験を入力してください');
+        return false;
+      }
+      return true;
+    }
+
+    function generateBoth() {
+      const inputs = getInputs();
+      if (!validateInputs(inputs)) return;
+      showInstagram(inputs);
+      showLine(inputs);
+      document.getElementById('output-instagram').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function generateInstagram() {
+      const inputs = getInputs();
+      if (!validateInputs(inputs)) return;
+      showInstagram(inputs);
+      document.getElementById('output-instagram').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function generateLine() {
+      const inputs = getInputs();
+      if (!validateInputs(inputs)) return;
+      showLine(inputs);
+      document.getElementById('output-line').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showInstagram(inputs) {
+      const hashtags = generateHashtags(inputs.area, inputs.equipment, inputs.license, inputs.experience);
+      const body = generateInstagramBody(inputs);
+      document.getElementById('result-instagram').textContent = body + '\n\n⸻\n\n' + hashtags;
+      document.getElementById('output-instagram').style.display = 'block';
+    }
+
+    function showLine(inputs) {
+      document.getElementById('result-line').textContent = generateLineMessage(inputs);
+      document.getElementById('output-line').style.display = 'block';
+    }
+
+    // ── Instagram投稿文生成 ──
+    function generateInstagramBody(inputs) {
+      const { account, area, equipment, license, experience } = inputs;
+      const equipmentList = equipment.split(/[・,、\n]/).map(e => e.trim()).filter(e => e);
+      const licenseList = license.split(/[・,、\n]/).map(l => l.trim()).filter(l => l);
+      const expList = experience.split(/[・,、\n]/).map(e => e.trim()).filter(e => e);
+
+      const mainEquipment = equipmentList[0] || '';
+      const hasMultiEquipment = equipmentList.length > 1;
+      const hasContest = experience.includes('コンテスト') || experience.includes('受賞');
+      const hasWedding = experience.includes('ウェディング') || experience.includes('wedding');
+      const hasConstruction = experience.includes('点検') || experience.includes('インフラ') || experience.includes('建設');
+      const hasAgriculture = experience.includes('農業') || experience.includes('散布');
+      const hasSchool = experience.includes('学校') || experience.includes('教育');
+      const hasAdmin = experience.includes('行政') || experience.includes('自治体');
+
+      const credit = account
+        ? `撮影・提供：@${account}\n※映像は許可をいただいてます。`
+        : '※映像は許可をいただいてます。';
+
+      const equipmentLine = mainEquipment ? `${mainEquipment}を使用し、` : '';
+
+      let licensePhrase = '';
+      if (licenseList.some(l => l.includes('一等'))) {
+        licensePhrase = '一等無人航空機操縦士として最高水準の安全管理のもと撮影を行っています。';
+      } else if (licenseList.some(l => l.includes('二等') || l.includes('2等'))) {
+        licensePhrase = '二等無人航空機操縦士として安全性と表現力の両立を意識した撮影を行っています。';
+      } else {
+        licensePhrase = '資格を活かした安全な飛行を心がけています。';
+      }
+
+      const expItems = [];
+      if (hasWedding) expItems.push('ウェディング');
+      if (hasAdmin) expItems.push('行政向け映像');
+      if (hasConstruction) expItems.push('インフラ点検');
+      if (hasAgriculture) expItems.push('農業散布');
+      if (hasSchool) expItems.push('学校・教育機関向け映像');
+      expList.forEach(e => {
+        if (!expItems.some(i => e.includes(i.replace('向け映像','').replace('散布','')))) {
+          expItems.push(e);
+        }
+      });
+
+      let expPhrase = '';
+      if (expItems.length >= 2) {
+        expPhrase = `${expItems.slice(0, -1).join('、')}から${expItems[expItems.length - 1]}まで幅広く対応し、\nそれぞれの現場に合わせた「伝わる映像表現」を大切にしています。`;
+      } else if (expItems.length === 1) {
+        expPhrase = `${expItems[0]}の実績を持ち、現場に合わせた映像表現を大切にしています。`;
+      } else {
+        expPhrase = `多岐にわたる現場に対応し、それぞれに合わせた映像表現を大切にしています。`;
+      }
+
+      const contestPhrase = hasContest ? '\nコンテスト受賞歴もあり、クオリティの高い映像制作が強みです。' : '';
+      const multiEquipPhrase = hasMultiEquipment
+        ? `\n${equipmentList.slice(1).join('・')}など複数機体を使いこなし、撮影シーンに合わせた最適な選択が可能です。`
+        : '';
+
+      return [
+        `${area}を拠点に活動するドローンパイロットをご紹介。`,
+        '',
+        credit,
+        '',
+        equipmentLine + licensePhrase,
+        '',
+        expPhrase,
+        contestPhrase,
+        multiEquipPhrase,
+        '',
+        '空からの視点で、現場の空気や魅力をそのまま届けることを意識した撮影です。\n\n撮影依頼は📩DMにて。'
+      ].join('\n').replace(/\n{3,}/g, '\n\n').trim();
+    }
+
+    // ── LINE返信文生成 ──
+    function generateLineMessage(inputs) {
+      const { name, area, equipment, license, experience } = inputs;
+
+      const greeting = name
+        ? `${name}、はじめまして。`
+        : 'はじめまして。';
+
+      const hasContest = experience.includes('コンテスト') || experience.includes('受賞');
+      const hasSchool = experience.includes('学校') || experience.includes('教育');
+      const hasWedding = experience.includes('ウェディング');
+      const hasAdmin = experience.includes('行政') || experience.includes('自治体');
+      const hasConstruction = experience.includes('点検') || experience.includes('インフラ');
+      const hasAgriculture = experience.includes('農業');
+
+      const equipmentList = equipment.split(/[・,、\n]/).map(e => e.trim()).filter(e => e);
+      const hasMultiEquipment = equipmentList.length > 1;
+
+      // 機体・実績への言及
+      let highlightPhrases = [];
+      if (hasMultiEquipment) highlightPhrases.push(`${equipmentList[0]}をはじめ幅広い機体をお持ちの点`);
+      if (hasContest) highlightPhrases.push('コンテスト受賞歴');
+      if (hasSchool) highlightPhrases.push('学校紹介映像のご実績');
+      if (hasWedding) highlightPhrases.push('ウェディング撮影のご経験');
+      if (hasAdmin) highlightPhrases.push('行政向け映像のご実績');
+      if (hasConstruction) highlightPhrases.push('インフラ点検のご経験');
+      if (hasAgriculture) highlightPhrases.push('農業ドローンのご経験');
+
+      let highlightText = '';
+      if (highlightPhrases.length >= 2) {
+        highlightText = `特に${highlightPhrases.slice(0, 2).join('や')}についても大変興味があります。`;
+      } else if (highlightPhrases.length === 1) {
+        highlightText = `特に${highlightPhrases[0]}についても大変興味があります。`;
+      }
+
+      const areaText = area ? `${area}エリアを中心に` : '';
+
+      return `${greeting}公式LINEへのご登録、誠にありがとうございます。
+
+${areaText}ご活躍されているとのこと、プロフィールを拝見し、機体ラインナップの幅広さや資格・実務経験の豊富さに大変感銘を受けました。${highlightText}
+
+ぜひ一度ご一緒できればと感じており、もし差し支えなければ過去の作品やポートフォリオを拝見させていただくことは可能でしょうか？
+
+また、弊社SNSにて作品をご紹介させていただくことも検討しており、クレジット表記（@アカウント名）を明記する形での掲載可否についても、併せてご確認いただけますと幸いです。
+
+今後、案件ごとのご相談や連携ができればと考えておりますので、引き続きよろしくお願いいたします。`;
+    }
+
+    // ── ハッシュタグ生成 ──
+    function generateHashtags(area, equipment, license, experience) {
+      const tags = ['#ドローンパイロット', '#空撮映像', '#映像制作', '#ドローン空撮'];
+      const areaMap = { '関東': '#関東空撮', '沖縄': '#沖縄空撮', '関西': '#関西空撮', '九州': '#九州空撮', '北海道': '#北海道空撮', '東北': '#東北空撮', '中部': '#中部空撮', '東海': '#中部空撮' };
+      Object.entries(areaMap).forEach(([k, v]) => { if (area.includes(k)) tags.push(v); });
+      if (equipment.includes('Mavic 3')) tags.push('#DJIMavic3');
+      if (equipment.includes('Air3') || equipment.includes('Air 3')) tags.push('#DJIAir3S');
+      if (equipment.includes('FPV')) tags.push('#FPVドローン');
+      if (equipment.includes('Mini')) tags.push('#DJIMini');
+      if (equipment.includes('inspire') || equipment.includes('Inspire')) tags.push('#DJIInspire');
+      if (experience.includes('ウェディング')) tags.push('#ウェディング空撮');
+      if (experience.includes('農業')) tags.push('#農業ドローン');
+      if (experience.includes('点検')) tags.push('#インフラ点検');
+      if (experience.includes('学校')) tags.push('#学校紹介動画');
+      if (experience.includes('コンテスト') || experience.includes('受賞')) tags.push('#ドローンコンテスト');
+      tags.push('#drone', '#aerial', '#droneshots');
+      return [...new Set(tags)].join(' ');
+    }
+
+    // ── コピー ──
+    function copyText(id, btn) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'コピーしました！';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'コピーする';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
